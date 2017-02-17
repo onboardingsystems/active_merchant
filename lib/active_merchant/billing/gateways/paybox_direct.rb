@@ -1,11 +1,11 @@
-require 'iconv'
-
 module ActiveMerchant #:nodoc:
   module Billing #:nodoc:
     class PayboxDirectGateway < Gateway
-      TEST_URL = 'https://preprod-ppps.paybox.com/PPPS.php'
-      LIVE_URL = 'https://ppps.paybox.com/PPPS.php'
-      LIVE_URL_BACKUP = 'https://ppps1.paybox.com/PPPS.php'
+      class_attribute :live_url_backup
+
+      self.test_url   = 'https://preprod-ppps.paybox.com/PPPS.php'
+      self.live_url   = 'https://ppps.paybox.com/PPPS.php'
+      self.live_url_backup = 'https://ppps1.paybox.com/PPPS.php'
 
       # Payment API Version
       API_VERSION = '00103'
@@ -39,7 +39,6 @@ module ActiveMerchant #:nodoc:
 
       SUCCESS_CODES = ['00000']
       UNAVAILABILITY_CODES = ['00001', '00097', '00098']
-      FRAUD_CODES = ['00102','00104','00105','00134','00138','00141','00143','00156','00157','00159']
       SUCCESS_MESSAGE = 'The transaction was approved'
       FAILURE_MESSAGE = 'The transaction failed'
 
@@ -61,7 +60,6 @@ module ActiveMerchant #:nodoc:
 
       def initialize(options = {})
         requires!(options, :login, :password)
-        @options = options
         super
       end
 
@@ -69,6 +67,8 @@ module ActiveMerchant #:nodoc:
         post = {}
         add_invoice(post, options)
         add_creditcard(post, creditcard)
+        add_amount(post, money, options)
+
         commit('authorization', money, post)
       end
 
@@ -76,6 +76,8 @@ module ActiveMerchant #:nodoc:
         post = {}
         add_invoice(post, options)
         add_creditcard(post, creditcard)
+        add_amount(post, money, options)
+
         commit('purchase', money, post)
       end
 
@@ -83,8 +85,10 @@ module ActiveMerchant #:nodoc:
         requires!(options, :order_id)
         post = {}
         add_invoice(post, options)
+        add_amount(post, money, options)
         post[:numappel] = authorization[0,10]
         post[:numtrans] = authorization[10,10]
+
         commit('capture', money, post)
       end
 
@@ -93,13 +97,15 @@ module ActiveMerchant #:nodoc:
         post ={}
         add_invoice(post, options)
         add_reference(post, identification)
+        add_amount(post, options[:amount], options)
         post[:porteur] = '000000000000000'
         post[:dateval] = '0000'
+
         commit('void', options[:amount], post)
       end
 
       def credit(money, identification, options = {})
-        deprecated CREDIT_DEPRECATION_MESSAGE
+        ActiveMerchant.deprecated CREDIT_DEPRECATION_MESSAGE
         refund(money, identification, options)
       end
 
@@ -107,11 +113,8 @@ module ActiveMerchant #:nodoc:
         post = {}
         add_invoice(post, options)
         add_reference(post, identification)
+        add_amount(post, money, options)
         commit('refund', money, post)
-      end
-
-      def test?
-        @options[:test] || Base.gateway_mode == :test
       end
 
       private
@@ -131,8 +134,12 @@ module ActiveMerchant #:nodoc:
         post[:numtrans] = identification[10,10]
       end
 
+      def add_amount(post, money, options)
+        post[:montant] = ('0000000000' + (money ? amount(money) : ''))[-10..-1]
+        post[:devise] = CURRENCY_CODES[options[:currency] || currency(money)]
+      end
+
       def parse(body)
-        body = Iconv.iconv("UTF-8","LATIN1", body.to_s).join
         results = {}
         body.split(/&/).each do |pair|
           key,val = pair.split(/\=/)
@@ -142,26 +149,20 @@ module ActiveMerchant #:nodoc:
       end
 
       def commit(action, money = nil, parameters = nil)
-        parameters[:montant] = ('0000000000' + (money ? amount(money) : ''))[-10..-1]
-        parameters[:devise] = CURRENCY_CODES[options[:currency] || currency(money)]
         request_data = post_data(action,parameters)
-        response = parse(ssl_post(test? ? TEST_URL : LIVE_URL, request_data))
-        response = parse(ssl_post(LIVE_URL_BACKUP, request_data)) if service_unavailable?(response) && !test?
+        response = parse(ssl_post(test? ? self.test_url : self.live_url, request_data))
+        response = parse(ssl_post(self.live_url_backup, request_data)) if service_unavailable?(response) && !test?
         Response.new(success?(response), message_from(response), response.merge(
           :timestamp => parameters[:dateq]),
           :test => test?,
           :authorization => response[:numappel].to_s + response[:numtrans].to_s,
-          :fraud_review => fraud_review?(response),
+          :fraud_review => false,
           :sent_params => parameters.delete_if{|key,value| ['porteur','dateval','cvv'].include?(key.to_s)}
         )
       end
 
       def success?(response)
         SUCCESS_CODES.include?(response[:codereponse])
-      end
-
-      def fraud_review?(response)
-        FRAUD_CODES.include?(response[:codereponse])
       end
 
       def service_unavailable?(response)
@@ -180,7 +181,7 @@ module ActiveMerchant #:nodoc:
           :dateq => Time.now.strftime('%d%m%Y%H%M%S'),
           :numquestion => unique_id(parameters[:order_id]),
           :site => @options[:login].to_s[0,7],
-          :rang => @options[:login].to_s[7..-1],
+          :rang => @options[:rang] || @options[:login].to_s[7..-1],
           :cle => @options[:password],
           :pays => '',
           :archivage => parameters[:order_id]
@@ -194,14 +195,6 @@ module ActiveMerchant #:nodoc:
 
         "0000000000#{randkey}"[-10..-1]
       end
-
-      def expdate(credit_card)
-        year  = sprintf("%.4i", credit_card.year)
-        month = sprintf("%.2i", credit_card.month)
-
-        "#{month}#{year[-2..-1]}"
-      end
-
     end
   end
 end

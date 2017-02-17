@@ -3,8 +3,8 @@ require 'test_helper'
 class PayflowExpressTest < Test::Unit::TestCase
   TEST_REDIRECT_URL        = 'https://www.sandbox.paypal.com/cgi-bin/webscr?cmd=_express-checkout&token=1234567890'
   TEST_REDIRECT_URL_MOBILE = 'https://www.sandbox.paypal.com/cgi-bin/webscr?cmd=_express-checkout-mobile&token=1234567890'
-  LIVE_REDIRECT_URL        = 'https://www.paypal.com/cgibin/webscr?cmd=_express-checkout&token=1234567890'
-  LIVE_REDIRECT_URL_MOBILE = 'https://www.paypal.com/cgibin/webscr?cmd=_express-checkout-mobile&token=1234567890'
+  LIVE_REDIRECT_URL        = 'https://www.paypal.com/cgi-bin/webscr?cmd=_express-checkout&token=1234567890'
+  LIVE_REDIRECT_URL_MOBILE = 'https://www.paypal.com/cgi-bin/webscr?cmd=_express-checkout-mobile&token=1234567890'
   
   TEST_REDIRECT_URL_WITHOUT_REVIEW = "#{TEST_REDIRECT_URL}&useraction=commit"
   LIVE_REDIRECT_URL_WITHOUT_REVIEW = "#{LIVE_REDIRECT_URL}&useraction=commit"
@@ -12,7 +12,7 @@ class PayflowExpressTest < Test::Unit::TestCase
   LIVE_REDIRECT_URL_MOBILE_WITHOUT_REVIEW = "#{LIVE_REDIRECT_URL_MOBILE}&useraction=commit"
   
   def setup
-    Base.gateway_mode = :test
+    Base.mode = :test
   
     @gateway = PayflowExpressGateway.new(
       :login => 'LOGIN',
@@ -31,7 +31,7 @@ class PayflowExpressTest < Test::Unit::TestCase
   end
   
   def teardown
-    Base.gateway_mode = :test
+    Base.mode = :test
   end
   
   def test_using_test_mode
@@ -39,7 +39,7 @@ class PayflowExpressTest < Test::Unit::TestCase
   end
   
   def test_overriding_test_mode
-    Base.gateway_mode = :production
+    Base.mode = :production
     
     gateway = PayflowExpressGateway.new(
       :login => 'LOGIN',
@@ -51,7 +51,7 @@ class PayflowExpressTest < Test::Unit::TestCase
   end
   
   def test_using_production_mode
-    Base.gateway_mode = :production
+    Base.mode = :production
     
     gateway = PayflowExpressGateway.new(
       :login => 'LOGIN',
@@ -62,7 +62,7 @@ class PayflowExpressTest < Test::Unit::TestCase
   end
   
   def test_live_redirect_url
-    Base.gateway_mode = :production
+    Base.mode = :production
     assert_equal LIVE_REDIRECT_URL, @gateway.redirect_url_for('1234567890')
     assert_equal LIVE_REDIRECT_URL_MOBILE, @gateway.redirect_url_for('1234567890', :mobile => true)
   end
@@ -73,13 +73,13 @@ class PayflowExpressTest < Test::Unit::TestCase
   end
   
   def test_live_redirect_url_without_review
-    Base.gateway_mode = :production
+    Base.mode = :production
     assert_equal LIVE_REDIRECT_URL_WITHOUT_REVIEW, @gateway.redirect_url_for('1234567890', :review => false)
     assert_equal LIVE_REDIRECT_URL_MOBILE_WITHOUT_REVIEW, @gateway.redirect_url_for('1234567890', :review => false, :mobile => true)
   end
   
   def test_test_redirect_url_without_review
-    assert_equal :test, Base.gateway_mode
+    assert_equal :test, Base.mode
     assert_equal TEST_REDIRECT_URL_WITHOUT_REVIEW, @gateway.redirect_url_for('1234567890', :review => false)
     assert_equal TEST_REDIRECT_URL_MOBILE_WITHOUT_REVIEW, @gateway.redirect_url_for('1234567890', :review => false, :mobile => true)
   end
@@ -116,17 +116,28 @@ class PayflowExpressTest < Test::Unit::TestCase
     assert_equal 'US', address['country']
     assert_nil address['phone']
   end
-  
+
+  def test_get_express_details_with_invalid_xml
+    @gateway.expects(:ssl_post).returns(successful_get_express_details_response(:street => "Main & Magic"))
+    response = @gateway.details_for('EC-2OPN7UJGFWK9OYFV')
+    assert_instance_of PayflowExpressResponse, response
+    assert_success response
+    assert response.test?
+
+    assert address = response.address
+    assert_equal 'Main  Magic', address['address1']
+  end
+
   def test_button_source
     xml = Builder::XmlMarkup.new
     @gateway.send(:add_paypal_details, xml, {})
     xml_doc = REXML::Document.new(xml.target!)
-    assert_equal 'ActiveMerchant', REXML::XPath.first(xml_doc, '/PayPal/ButtonSource').text
+    assert_nil REXML::XPath.first(xml_doc, '/PayPal/ButtonSource')
   end
   
   private
   
-  def successful_get_express_details_response
+  def successful_get_express_details_response(options={:street => "111 Main St."})
     <<-RESPONSE
 <XMLPayResponse xmlns='http://www.verisign.com/XMLPay'>
   <ResponseData>
@@ -145,7 +156,7 @@ class PayflowExpressTest < Test::Unit::TestCase
           <Name>Joe</Name>
           <ShipTo>
             <Address>
-              <Street>111 Main St.</Street>
+              <Street>#{options[:street]}</Street>
               <City>San Jose</City>
               <State>CA</State>
               <Zip>95100</Zip>

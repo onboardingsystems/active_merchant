@@ -1,10 +1,26 @@
-rvm:
-  - 1.8.7
-  - 1.9.2
-  - rbx
-  - ree
-
+language: ruby
 script: "bundle exec rake test:units"
+sudo: false
+cache: bundler
+
+rvm:
+- 2.1
+- 2.2.3
+- 2.3.3
+
+gemfile:
+- Gemfile.rails32
+- Gemfile.rails40
+- Gemfile.rails41
+- Gemfile.rails42
+- Gemfile.rails5
+
+matrix:
+  exclude:
+    - rvm: 2.1
+      gemfile: Gemfile.rails5
 
 notifications:
-  disabled: true
+  email:
+    on_success: never
+    on_failure: always

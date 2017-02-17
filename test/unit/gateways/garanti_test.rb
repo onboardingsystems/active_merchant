@@ -1,9 +1,16 @@
 # coding: utf-8
+
 require 'test_helper'
 
 class GarantiTest < Test::Unit::TestCase
   def setup
-    Base.gateway_mode = :test
+    @original_kcode = nil
+    if RUBY_VERSION < '1.9' && $KCODE == "NONE"
+      @original_kcode = $KCODE
+      $KCODE = 'u'
+    end
+
+    Base.mode = :test
     @gateway = GarantiGateway.new(:login => 'a', :password => 'b', :terminal_id => 'c', :merchant_id => 'd')
 
     @credit_card = credit_card(4242424242424242)
@@ -14,6 +21,10 @@ class GarantiTest < Test::Unit::TestCase
       :billing_address => address,
       :description => 'Store Purchase'
     }
+  end
+
+  def teardown
+    $KCODE = @original_kcode if @original_kcode
   end
 
   def test_successful_purchase
@@ -52,8 +63,21 @@ class GarantiTest < Test::Unit::TestCase
   def test_nil_normalization
     assert_nil @gateway.send(:normalize, nil)
   end
-  
-  
+
+  def test_strip_invalid_xml_chars
+    xml = <<EOF
+      <response>
+        <element>Parse the First & but not this &tilde; &x002a;</element>
+      </response>
+EOF
+    parsed_xml = @gateway.send(:strip_invalid_xml_chars, xml)
+
+    assert REXML::Document.new(parsed_xml)
+    assert_raise(REXML::ParseException) do
+      REXML::Document.new(xml)
+    end
+  end
+
   private
 
   # Place raw successful response from gateway here
@@ -80,7 +104,7 @@ class GarantiTest < Test::Unit::TestCase
             <SequenceNum>000008</SequenceNum>
             <ProvDate>20101218 08:56:39</ProvDate>
             <CardNumberMasked></CardNumberMasked>
-            <CardHolderName></CardHolderName>
+            <CardHolderName>Company Name & Another Name</CardHolderName>
             <HostMsgList></HostMsgList>
             <RewardInqResult>
                   <RewardList></RewardList>

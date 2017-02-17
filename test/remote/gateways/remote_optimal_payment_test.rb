@@ -11,7 +11,9 @@ class RemoteOptimalPaymentTest < Test::Unit::TestCase
     @options = {
       :order_id => '1',
       :billing_address => address,
-      :description => 'Basic Subscription'
+      :description => 'Basic Subscription',
+      :email => 'email@example.com',
+      :ip => '1.2.3.4'
     }
   end
 
@@ -21,23 +23,17 @@ class RemoteOptimalPaymentTest < Test::Unit::TestCase
     assert_equal 'no_error', response.message
   end
 
-  def test_minimal_successful_purchase
-    options = {
-      :order_id => '1',
-      :description => 'Basic Subscription',
-      :billing_address => {
-        :zip      => 'K1C2N6',
-      }
-    }
-    credit_card = CreditCard.new(
-      :number => '4242424242424242',
-      :month => 9,
-      :year => Time.now.year + 1,
-      :first_name => 'Longbob',
-      :last_name => 'Longsen',
-      :type => 'visa'
-    )
-    assert response = @gateway.purchase(@amount, credit_card, options)
+  def test_unsuccessful_purchase_with_shipping_address
+    @options.merge!(:shipping_address => address)
+    assert response = @gateway.purchase(@amount, @credit_card, @options)
+    assert_success response
+    assert_equal 'no_error', response.message
+  end
+
+  def test_successful_great_britain
+    @options[:billing_address][:country] = "GB"
+    @options[:billing_address][:state] = "North West England"
+    assert response = @gateway.purchase(@amount, @credit_card, @options)
     assert_success response
     assert_equal 'no_error', response.message
   end
@@ -132,8 +128,8 @@ class RemoteOptimalPaymentTest < Test::Unit::TestCase
 
   def test_invalid_login
     gateway = OptimalPaymentGateway.new(
-                :account => '1',
-                :login => 'bad',
+                :account_number => '1',
+                :store_id => 'bad',
                 :password => 'bad'
               )
     assert response = gateway.purchase(@amount, @credit_card, @options)

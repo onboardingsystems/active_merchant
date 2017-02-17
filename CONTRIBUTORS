@@ -122,6 +122,7 @@ MerchantWARE (July 7, 2009)
 FirstPay (July 24, 2009)
 
 * Phil R
+* Ryan Daigle (rwdaigle)
 
 Ogone (July 20, 2009)
 
@@ -248,6 +249,320 @@ Optimal Payments (August, 2011)
 
 * Jamie Macey (jamie)
 
-CardSave (August 2011,)
+CardSave (August, 2011)
 
 * Tom Crinson (MrJaba)
+
+Dwolla (September, 2011)
+
+* James Armstead (armsteadj1)
+
+Samurai (November, 2011)
+
+* Joshua Krall (jkrall)
+
+CertoDirect Gateway (February, 2012)
+
+* Aleksei Gusev (hron)
+
+Authorize.Net SIM Integration (February, 2012)
+
+* Roger Pack (rdp)
+* Nick Rogers (courtland)
+
+NAB Transact (AU) Gateway (February, 2012)
+
+* Tom Meier (tommeier)
+
+iTransact XML Gateway (March, 2012)
+
+* Kevin Motschiedler (motske)
+
+Robokassa Integration (March, 2012)
+
+* Vasiliy Ermolovich (nashby)
+
+Moneris US Gateway (March, 2012)
+
+* Michael Wood (eddanger)
+
+Dotpay Integration (March, 2012)
+
+* Przemysław Ciąćka (kacperix)
+
+Vindicia gateway (April 2012)
+
+* Steven Davidovitz (steved555)
+
+MiGS gateway (April 2012)
+
+* Michael Noack (mnoack)
+* Justin Jones (nagash)
+
+ePay integration (April 2012)
+
+* Michael (ePay)
+
+Litle gateway (May 2012)
+
+* Gregory Drake (GregDrake)
+
+Fat Zebra gateway (June 2012)
+
+* Matthew Savage (amasses)
+
+Metrics Global gateway (June 2012)
+
+* Dan Knox (DanKnox)
+
+EasyPay integration (July 2012)
+
+* Vasiliy Ermolovich (nashby)
+
+PayGateXML gateway (July 2012)
+
+* bryan (rubyisbeautiful)
+
+PayWay gateway (July 2012)
+
+* Ben Zhang (BenZhang)
+
+First Data integration (July 2012)
+
+* Nick Rogers (courtland)
+
+WebPay integration (July 2012)
+
+* Vasiliy Ermolovich (nashby)
+
+Suomen Maksuturva integration (July 2012)
+
+* Antti Akonniemi (akonan)
+
+Paxum integration (July 2012)
+
+* Stanislav Mekhonoshin (Mehonoshin)
+
+Balanced gateway (July 2012)
+
+* Marshall Jones (mjallday)
+
+PayFast integration (October 2012)
+
+* Vasiliy Ermolovich (nashby)
+
+A1Agregator (November 2012)
+
+* Roman Ivanilov (england)
+
+Liqpay integration (November 2012)
+
+* beorc
+
+eWay Rapid 3.0 gateway (December 2012)
+
+* Nathaniel Talbott (ntalbott)
+
+FirstData Global Gateway e4 (December 2012)
+
+* Chris Sheppard (frobcode)
+
+Spreedly Core gateway (December 2012)
+
+* Duff OMelia (duff)
+
+Pin gateway (February 2013)
+
+* Myles Eftos (madpilot)
+
+Merchant Warrior (February 2013)
+
+* Ben Bruscella (benbruscella)
+* Дмитрий Василец (pronix)
+* Kirill Shirinkin (Fodoj)
+* Nathaniel Talbott (ntalbott)
+
+Paymill (February 2013)
+
+* Duff O'Melia (duff)
+
+EVO Canada (February 2013)
+
+* Alex Dunae (alexdunae)
+
+Finansbank WebPOS (March 2013)
+
+* scamurcuoglu
+
+Cardstream Modern (March 2013)
+
+* Vincens (ExxKA)
+
+Transnational (May 2013)
+
+* Ben VandenBos (bvandenbos)
+
+Barclays ePDQ Extra Plus (June 2013)
+
+* Nathaniel Talbott (ntalbott)
+
+MerchantWare V4 (July 2013)
+
+* Aleksei Gusev (hron)
+
+Platron integration (July 2013)
+
+* Alexey Kiryushin (alexwl)
+
+MoneyMovers (September 2013)
+
+* Jeffery Utter (jeffutter)
+
+Be2Bill (September 2013)
+
+* Michaël Hoste (MichaelHoste)
+
+Conekta (October 2013)
+
+* Leo Fischer (leofischer)
+
+App55 (November 2013)
+
+* (ianbutler55)
+
+Swipe Checkout (November 2013)
+
+* (matt-optimizerhq)
+
+Raven PacNet (November 2013)
+
+* Luis Lopez (llopez)
+
+Payex (November 2013)
+
+* Tom Davies (atomgiant)
+
+Payscout (December 2013)
+
+* Luis Lopez (llopez)
+
+SoEasyPay (December 2013)
+
+* Ivan Radovanovic (ir-soeasycorp)
+
+Cecabank (February 2014)
+
+* Alberto Molpeceres (molpe)
+
+Openpay (February 2014)
+
+* (darkaz)
+
+maxiPago (February 2014)
+
+* (alexandremcosta)
+
+WePay (March 2014)
+
+* Faizal Zakaria (faizalzakaria)
+
+FirstGiving (March 2014)
+
+* Faizal Zakaria (faizalzakaria)
+
+BridgePay (April 2014)
+
+* Mark Bennett (markabe)
+
+PagoFacil (May 2014)
+
+* Benito Serna (bhserna)
+
+Cashnet (May 2014)
+
+* Tom Hoen (hoenth)
+
+Heartland Payment Systems (May 2014)
+
+* Mark Hagan (SecureSubmit)
+
+Borgun (June 2014)
+
+* Mark Bennett (markabe)
+
+Commercegate (June 2014)
+
+* Vitaliy (vitaliyvasin)
+
+Worldpay US (August 2014)
+
+* Mark Bennett (markabe)
+
+Checkout.com (September 2014)
+
+* (ravish-ramrakha-cko)
+
+Bank Frick (September 2014)
+
+* Piers Chambers (varyonic)
+
+Global Transport (September 2014)
+
+* Duff O'Melia (duff)
+
+IPP (December 2014)
+
+* (InfraRuby)
+
+QuickBooks Payments (January 2015)
+
+* Arbab Ahmed (bizla)
+* Ivan Sanchez (ivanfer)
+
+Axcess MS (February 2015)
+
+* Tim Tait (timtait)
+
+PayHub (February 2015)
+
+* Grep Ruby (grepruby)
+
+Qvalent (March 2015)
+
+* Mark Bennett (markabe)
+
+Worldpay Online Payments (April 2015)
+
+* (ao)
+
+PayU India (May 2015)
+
+* Nathaniel Talbott (ntalbott)
+
+SecurionPay (October 2015)
+
+* Michał Szajbe (szajbus)
+
+Komoju (October 2015)
+
+* Kazunori Kajihiro (k2nr)
+
+CAMS: Central Account Management System (October 2015)
+
+* Trevor Grayson (trevorgrayson)
+
+Transact Pro (October 2015)
+
+* Piers C (varyonic)
+
+Payeezy (October 2015)
+
+* Washington L Braga Jr (huoxito)
+
+Clearhaus (October 2015)
+
+* Dinesh Yadav (dinesh)
+
+Cardknox (November 2015)
+
+* (dlehren)

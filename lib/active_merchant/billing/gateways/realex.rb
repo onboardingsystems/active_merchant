@@ -1,4 +1,4 @@
-require 'rexml/document'
+require 'nokogiri'
 require 'digest/sha1'
 
 module ActiveMerchant
@@ -12,14 +12,14 @@ module ActiveMerchant
     # login - The unique id of the merchant
     # password - The secret is used to digitally sign the request
     # account - This is an optional third part of the authentication process
-    # and is used if the merchant wishes do distuinguish cc traffic from the different sources
+    # and is used if the merchant wishes do distinguish cc traffic from the different sources
     # by using a different account. This must be created in advance
     #
     # the Realex team decided to make the orderid unique per request,
     # so if validation fails you can not correct and resend using the
     # same order id
     class RealexGateway < Gateway
-      URL = 'https://epage.payandshop.com/epage-remote.cgi'
+      self.live_url = self.test_url = 'https://epage.payandshop.com/epage-remote.cgi'
 
       CARD_MAPPING = {
         'master'            => 'MC',
@@ -28,13 +28,14 @@ module ActiveMerchant
         'diners_club'       => 'DINERS',
         'switch'            => 'SWITCH',
         'solo'              => 'SWITCH',
-        'laser'             => 'LASER'
+        'laser'             => 'LASER',
+        'maestro'           => 'MC'
       }
 
       self.money_format = :cents
       self.default_currency = 'EUR'
       self.supported_cardtypes = [ :visa, :master, :american_express, :diners_club, :switch, :solo, :laser ]
-      self.supported_countries = [ 'IE', 'GB' ]
+      self.supported_countries = %w(IE GB FR BE NL LU IT)
       self.homepage_url = 'http://www.realexpayments.com/'
       self.display_name = 'Realex'
 
@@ -45,7 +46,6 @@ module ActiveMerchant
       def initialize(options = {})
         requires!(options, :login, :password)
         options[:refund_hash] = Digest::SHA1.hexdigest(options[:rebate_secret]) if options.has_key?(:rebate_secret)
-        @options = options
         super
       end
 
@@ -74,7 +74,7 @@ module ActiveMerchant
       end
 
       def credit(money, authorization, options = {})
-        deprecated CREDIT_DEPRECATION_MESSAGE
+        ActiveMerchant.deprecated CREDIT_DEPRECATION_MESSAGE
         refund(money, authorization, options)
       end
 
@@ -83,12 +83,25 @@ module ActiveMerchant
         commit(request)
       end
 
+      def supports_scrubbing
+        true
+      end
+
+      def scrub(transcript)
+        transcript.
+        gsub(%r((Authorization: Basic )\w+), '\1[FILTERED]').
+        gsub(%r((<number>)\d+(</number>))i, '\1[FILTERED]\2')
+      end
+
       private
       def commit(request)
-        response = parse(ssl_post(URL, request))
+        response = parse(ssl_post(self.live_url, request))
 
-        Response.new(response[:result] == "00", message_from(response), response,
-          :test => response[:message] =~ /\[ test system \]/,
+        Response.new(
+          (response[:result] == "00"),
+          message_from(response),
+          response,
+          :test => (response[:message] =~ %r{\[ test system \]}),
           :authorization => authorization_from(response),
           :cvv_result => response[:cvnresult],
           :avs_result => {
@@ -101,9 +114,8 @@ module ActiveMerchant
       def parse(xml)
         response = {}
 
-        xml = REXML::Document.new(xml)
-        xml.elements.each('//response/*') do |node|
-
+        doc = Nokogiri::XML(xml)
+        doc.xpath('//response/*').each do |node|
           if (node.elements.size == 0)
             response[node.name.downcase.to_sym] = normalize(node.text)
           else
@@ -112,8 +124,7 @@ module ActiveMerchant
               response[name.to_sym] = normalize(childnode.text)
             end
           end
-
-        end unless xml.root.nil?
+        end unless doc.root.nil?
 
         response
       end
@@ -190,14 +201,14 @@ module ActiveMerchant
 
           if billing_address
             xml.tag! 'address', 'type' => 'billing' do
-              xml.tag! 'code', avs_input_code( billing_address )
+              xml.tag! 'code', format_address_code(billing_address)
               xml.tag! 'country', billing_address[:country]
             end
           end
 
           if shipping_address
             xml.tag! 'address', 'type' => 'shipping' do
-              xml.tag! 'code', shipping_address[:zip]
+              xml.tag! 'code', format_address_code(shipping_address)
               xml.tag! 'country', shipping_address[:country]
             end
           end
@@ -243,13 +254,9 @@ module ActiveMerchant
         end
       end
 
-      def avs_input_code(address)
-        address.values_at(:zip, :address1).map{ |v| extract_digits(v) }.join('|')
-      end
-
-      def extract_digits(string)
-        return "" if string.nil?
-        string.gsub(/[\D]/,'')
+      def format_address_code(address)
+        code = [address[:zip].to_s, address[:address1].to_s + address[:address2].to_s]
+        code.collect{|e| e.gsub(/\D/, "")}.reject{|e| e.empty?}.join("|")
       end
 
       def new_timestamp
@@ -267,16 +274,6 @@ module ActiveMerchant
 
       def expiry_date(credit_card)
         "#{format(credit_card.month, :two_digits)}#{format(credit_card.year, :two_digits)}"
-      end
-
-      def normalize(field)
-        case field
-        when "true"   then true
-        when "false"  then false
-        when ""       then nil
-        when "null"   then nil
-        else field
-        end
       end
 
       def message_from(response)

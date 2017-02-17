@@ -4,17 +4,26 @@ require 'test_helper'
 class RemoteGarantiTest < Test::Unit::TestCase
 
   def setup
+    if RUBY_VERSION < '1.9' && $KCODE == "NONE"
+      @original_kcode = $KCODE
+      $KCODE = 'u'
+    end
+
     @gateway = GarantiGateway.new(fixtures(:garanti))
 
-    @amount = 1 # 1 cents = 0.01$
-    @declined_card = credit_card('4000100011112224')
-    @credit_card = credit_card('4000300011112220')
+    @amount = 100 # 1 cents = 0.01$
+    @declined_card = credit_card('4282209027132017')
+    @credit_card = credit_card('4282209027132016', month: 5, year: 2018, verification_value: 358)
 
     @options = {
-      :order_id => ActiveMerchant::Utils.generate_unique_id,
+      :order_id => generate_unique_id,
       :billing_address => address,
       :description => 'Store Purchase'
     }
+  end
+
+  def teardown
+    $KCODE = @original_kcode if @original_kcode
   end
 
   def test_successful_purchase
@@ -26,7 +35,7 @@ class RemoteGarantiTest < Test::Unit::TestCase
   def test_unsuccessful_purchase
     assert response = @gateway.purchase(@amount, @declined_card, @options)
     assert_failure response
-    assert_match /Declined/, response.message
+    assert_match %r{Declined}, response.message
   end
 
   def test_authorize_and_capture
@@ -42,14 +51,13 @@ class RemoteGarantiTest < Test::Unit::TestCase
   def test_failed_capture
     assert response = @gateway.capture(@amount, '')
     assert_failure response
-    assert_match /Declined/, response.message
+    assert_match %r{Declined}, response.message
   end
 
   def test_invalid_login
     gateway = GarantiGateway.new(
-                :provision_user_id => 'PROVAUT',
-                :user_id => 'PROVAUT',
-                :terminal_id => '10000174',
+                :login => 'PROVAUT',
+                :terminal_id => '30691300',
                 :merchant_id => '',
                 :password => ''
               )
