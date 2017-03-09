@@ -3,26 +3,26 @@ module ActiveMerchant #:nodoc:
     class PayleaseGateway < Gateway
       LIVE_URL = 'https://www.paylease.com/gapi/request.php'
       TEST_URL = LIVE_URL
-      
+
       CC_PAYMENT = 'CCPayment'
       CC_TRANSACTION = 'CCTransaction'
       AUTHORIZE = 'AUTH'
       CAPTURE = 'CAPTURE'
-      
+
       SUCCESS_CODES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 182, 183, 189]
-      
+
       self.supported_countries = ['US']
       self.supported_cardtypes = [:visa, :master, :american_express, :discover]
       self.homepage_url = 'http://www.paylease.com/'
       self.display_name = 'PayLease - Credit Card'
-      
-      
+
+
       def initialize(options = {})
         requires!(options, :login, :password, :gateway_id, :payee_id)
         @options = options
         super
-      end  
-      
+      end
+
       
       def authorize(money, creditcard, options = {})
         requires!(options, :payer_reference_id)
@@ -32,11 +32,11 @@ module ActiveMerchant #:nodoc:
           add_credentials(xml, options)
           add_mode(xml, options)
           add_cc_authorize_transactions(xml, money, creditcard, options)
-        end 
+        end
         commit(xml.target!)
       end
-      
-      
+
+
       def capture(money, authorization, options = {})
         requires!(options, :payer_reference_id)
         requires!(options, :transaction_id)
@@ -46,11 +46,11 @@ module ActiveMerchant #:nodoc:
           add_credentials(xml, options)
           add_mode(xml, options)
           add_cc_capture_transactions(xml, money, authorization, options)
-        end 
+        end
         commit(xml.target!)
       end
-      
-      
+
+
       def purchase(money, creditcard, options = {})
         requires!(options, :payer_reference_id)
         xml = Builder::XmlMarkup.new :indent => 2
@@ -59,14 +59,14 @@ module ActiveMerchant #:nodoc:
           add_credentials(xml, options)
           add_mode(xml, options)
           add_cc_purchase_transactions(xml, money, creditcard, options)
-        end 
+        end
         commit(xml.target!)
-      end                       
+      end
 
-    
+
       private
 
-      
+
       def add_credentials(xml, options)
         xml.tag! 'Credentials' do
           xml.tag! 'GatewayId', @options[:gateway_id]
@@ -74,13 +74,13 @@ module ActiveMerchant #:nodoc:
           xml.tag! 'Password', @options[:password]
         end
       end
-      
-      
+
+
       def add_mode(xml, options)
         xml.tag! 'Mode', test? ? 'Test' : 'Production'
       end
-      
-      
+
+
       def add_cc_authorize_transactions(xml, money, creditcard, options)
         xml.tag! 'Transactions' do
           xml.tag! 'Transaction' do
@@ -92,13 +92,13 @@ module ActiveMerchant #:nodoc:
             xml.tag! 'PayeeId', @options[:payee_id]
             xml.tag! 'PayerFirstName', creditcard.first_name
             xml.tag! 'PayerLastName', creditcard.last_name
-            
+
             xml.tag! 'CreditCardType', credit_card_type(creditcard)
             xml.tag! 'CreditCardNumber', creditcard.number
             xml.tag! 'CreditCardExpMonth', format(creditcard.month, :two_digits)
             xml.tag! 'CreditCardExpYear', format(creditcard.year, :two_digits)
             xml.tag! 'CreditCardCvv2', creditcard.verification_value if creditcard.verification_value?
-            
+
             xml.tag! 'BillingFirstName', creditcard.first_name
             xml.tag! 'BillingLastName', creditcard.last_name
             if address = options[:billing_address] || options[:address]
@@ -108,15 +108,15 @@ module ActiveMerchant #:nodoc:
               xml.tag! 'BillingCountry', 'US' # only accepted value
               xml.tag! 'BillingZip', address[:zip].to_s
             end
-            
+
             xml.tag! 'TotalAmount', amount(money)
             xml.tag! 'FeeAmount', '0.00'
             xml.tag! 'SaveAccount', 'No'
           end
         end
       end
-      
-      
+
+
       def add_cc_capture_transactions(xml, money, authorization, options)
         xml.tag! 'Transactions' do
           xml.tag! 'Transaction' do
@@ -128,7 +128,7 @@ module ActiveMerchant #:nodoc:
           end
         end
       end
-      
+
 
       def add_cc_purchase_transactions(xml, money, creditcard, options)
         xml.tag! 'Transactions' do
@@ -140,13 +140,13 @@ module ActiveMerchant #:nodoc:
             xml.tag! 'PayeeId', @options[:payee_id]
             xml.tag! 'PayerFirstName', creditcard.first_name
             xml.tag! 'PayerLastName', creditcard.last_name
-            
+
             xml.tag! 'CreditCardType', credit_card_type(creditcard)
             xml.tag! 'CreditCardNumber', creditcard.number
             xml.tag! 'CreditCardExpMonth', format(creditcard.month, :two_digits)
             xml.tag! 'CreditCardExpYear', format(creditcard.year, :two_digits)
             xml.tag! 'CreditCardCvv2', creditcard.verification_value if creditcard.verification_value?
-            
+
             xml.tag! 'BillingFirstName', creditcard.first_name
             xml.tag! 'BillingLastName', creditcard.last_name
             if address = options[:billing_address] || options[:address]
@@ -156,15 +156,15 @@ module ActiveMerchant #:nodoc:
               xml.tag! 'BillingCountry', 'US' # only accepted value
               xml.tag! 'BillingZip', address[:zip].to_s
             end
-            
+
             xml.tag! 'TotalAmount', amount(money)
             xml.tag! 'FeeAmount', '0.00'
             xml.tag! 'SaveAccount', 'No'
           end
         end
       end
-      
-            
+
+
       def credit_card_type(creditcard)
         case creditcard.type
         when "visa"
@@ -186,29 +186,29 @@ module ActiveMerchant #:nodoc:
         response = parse(data)
         # response[:original_request] = post_data(xml)
         message = message_from(response)
-        
-        Response.new(success?(response), message, response, 
-          :test => response[:test], 
+
+        Response.new(success?(response), message, response,
+          :test => response[:test],
           :authorization => response[:authorization],
         )
       end
-      
-      
+
+
       def post_data(xml)
         post = {}
         post['XML'] = xml
         post.to_query
       end
-      
-      
+
+
       def parse(data)
         response = {}
         response[:original_data] = data
-        
+
         xml = REXML::Document.new(data)
         raise "Gateway response does not appear to be XML" unless xml.root
         response[:test] = xml.root.elements["Mode"].text == "Test"
-        
+
         parsed = REXML::XPath.first(xml, "//Transaction") || parsed = REXML::XPath.first(xml, "//Error")
         if parsed
           response[:authorization] = parsed.elements['TransactionId'].text if parsed.elements['TransactionId']
@@ -219,10 +219,10 @@ module ActiveMerchant #:nodoc:
         else
           raise "Unknown response from paylease: #{data}"
         end
-                
+
         response
       end
-      
+
 
       def message_from(response)
         message = response[:status]
@@ -231,13 +231,12 @@ module ActiveMerchant #:nodoc:
         end
         message
       end
-      
-      
+
+
       def success?(response)
         response.has_key?(:code) && SUCCESS_CODES.include?(response[:code])
       end
-      
+
     end
   end
 end
-
