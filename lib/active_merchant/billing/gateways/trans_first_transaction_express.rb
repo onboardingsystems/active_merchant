@@ -248,7 +248,6 @@ module ActiveMerchant #:nodoc:
         request = build_xml_transaction_request do |doc|
           add_amount(doc, amount)
           add_original_transaction_data(doc, transaction_id)
-          add_order_number(doc, options)
         end
 
         commit(:refund, request)
@@ -338,8 +337,8 @@ module ActiveMerchant #:nodoc:
           response,
           error_code: error_code_from(succeeded, response),
           authorization: authorization_from(action, response),
-          avs_result: AVSResult.new(code: response["AVSCode"]),
-          cvv_result: CVVResult.new(response["CVV2Response"]),
+          avs_result: AVSResult.new(code: response["avsRslt"]),
+          cvv_result: CVVResult.new(response["secRslt"]),
           test: test?
         )
       end
