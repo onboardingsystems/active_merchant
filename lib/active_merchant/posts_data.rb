@@ -4,6 +4,7 @@ module ActiveMerchant #:nodoc:
     def self.included(base)
       base.class_attribute :ssl_strict
       base.ssl_strict = true
+
       base.class_attribute :ssl_version
       base.ssl_version = nil
 
@@ -40,13 +41,12 @@ module ActiveMerchant #:nodoc:
 
     def raw_ssl_request(method, endpoint, data, headers = {})
       logger.warn "#{self.class} using ssl_strict=false, which is insecure" if logger unless ssl_strict
-      logger.warn "#{self.class} posting to plaintext endpoint, which is insecure" if logger unless endpoint =~ /^https:/
+      logger.warn "#{self.class} posting to plaintext endpoint, which is insecure" if logger unless endpoint.to_s =~ /^https:/
 
       connection = new_connection(endpoint)
       connection.open_timeout = open_timeout
       connection.read_timeout = read_timeout
       connection.retry_safe   = retry_safe
-      connection.ciphers      = ciphers
       connection.verify_peer  = ssl_strict
       connection.ssl_version  = ssl_version
       connection.logger       = logger
