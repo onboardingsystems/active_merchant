@@ -1,22 +1,17 @@
 module ActiveMerchant #:nodoc:
   module Billing #:nodoc:
-    
+
     #
     # Bluefin is a branded reseller of EZIC.  See the superclass for more details.
     #
     class BluefinGateway < EzicGateway
-      TEST_URL = 'https://secure.bluefingateway.com:1402/gw/sas/direct3.1'
-      LIVE_URL = 'https://secure.bluefingateway.com:1402/gw/sas/direct3.1'
-      
-      # There is no testing gateway, the account has to be in test mode or run this specific CC number
-      TESTING_CC = '4444333322221111'
-      
-      # The homepage URL of the gateway
+      self.live_url = 'https://secure.bluefingateway.com:1402/gw/sas/direct3.1'
+
+      self.supported_countries = %w(US)
+      self.default_currency = 'USD'
+      self.supported_cardtypes = [:visa, :master, :american_express, :discover, :jcb, :diners_club]
       self.homepage_url = 'http://www.bluefin.com/'
-      
-      # The name of the gateway
-      self.display_name = 'Bluefin Gateway (EZIC)'      
+      self.display_name = 'Bluefin'
     end
   end
 end
-
