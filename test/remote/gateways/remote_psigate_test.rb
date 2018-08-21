@@ -5,10 +5,9 @@ class PsigateRemoteTest < Test::Unit::TestCase
   def setup
     Base.mode = :test
     @gateway = PsigateGateway.new(fixtures(:psigate))
-    PsigateGateway.ssl_strict = false
 
     @amount = 2400
-    @creditcard = credit_card('4111111111111111')
+    @creditcard = credit_card('4242424242424242')
     @options = {
       :order_id => generate_unique_id,
       :billing_address => address,
@@ -55,16 +54,5 @@ class PsigateRemoteTest < Test::Unit::TestCase
 
     assert void = @gateway.void(authorization.authorization)
     assert_success void
-  end
-
-  def test_transcript_scrubbing
-    transcript = capture_transcript(@gateway) do
-      @gateway.purchase(@amount, @creditcard, @options)
-    end
-    transcript = @gateway.scrub(transcript)
-
-    assert_scrubbed(@creditcard.number, transcript)
-    assert_scrubbed(@creditcard.verification_value, transcript)
-    assert_scrubbed(@gateway.options[:password], transcript)
   end
 end

@@ -27,7 +27,7 @@ module ActiveMerchant #:nodoc:
         add_payment_method(post, payment_method)
         add_billing_address(post, payment_method, options)
         add_shipping_address(post, options)
-        post[:action] = 'sale'
+        post[:action] = "sale"
 
         commit(:post, post)
       end
@@ -39,16 +39,17 @@ module ActiveMerchant #:nodoc:
         add_payment_method(post, payment_method)
         add_billing_address(post, payment_method, options)
         add_shipping_address(post, options)
-        post[:action] = 'authorize'
+        post[:action] = "authorize"
 
         commit(:post, post)
       end
 
       def capture(money, authorization, options={})
         post = {}
+        add_invoice(post, options)
         post[:transaction_id] = transaction_id_from(authorization)
-        post[:authorization_code] = authorization_code_from(authorization) || ''
-        post[:action] = 'capture'
+        post[:authorization_code] = authorization_code_from(authorization) || ""
+        post[:action] = "capture"
 
         commit(:put, post)
       end
@@ -59,17 +60,7 @@ module ActiveMerchant #:nodoc:
         add_invoice(post, options)
         add_payment_method(post, payment_method)
         add_billing_address(post, payment_method, options)
-        post[:action] = 'disburse'
-
-        commit(:post, post)
-      end
-
-      def refund(money, authorization, options={})
-        post = {}
-        add_amount(post, money, options)
-        post[:original_transaction_id] = transaction_id_from(authorization)
-        post[:authorization_code] = authorization_code_from(authorization)
-        post[:action] = 'reverse'
+        post[:action] = "disburse"
 
         commit(:post, post)
       end
@@ -78,7 +69,7 @@ module ActiveMerchant #:nodoc:
         post = {}
         post[:transaction_id] = transaction_id_from(authorization)
         post[:authorization_code] = authorization_code_from(authorization)
-        post[:action] = 'void'
+        post[:action] = "void"
 
         commit(:put, post)
       end
@@ -130,11 +121,11 @@ module ActiveMerchant #:nodoc:
           post[:billing_address][:physical_address][:locality] = address[:city] if address[:city]
         end
 
-        if empty?(post[:billing_address][:first_name]) && payment.first_name
+        if empty?(post[:billing_address][:first_name] && payment.first_name)
           post[:billing_address][:first_name] = payment.first_name
         end
 
-        if empty?(post[:billing_address][:last_name]) && payment.last_name
+        if empty?(post[:billing_address][:last_name] && payment.last_name)
           post[:billing_address][:last_name] = payment.last_name
         end
       end
@@ -192,8 +183,8 @@ module ActiveMerchant #:nodoc:
           message_from(response),
           response,
           authorization: authorization_from(response),
-          avs_result: AVSResult.new(code: response['response']['avs_result']),
-          cvv_result: CVVResult.new(response['response']['cvv_code']),
+          avs_result: AVSResult.new(code: response["response"]["avs_result"]),
+          cvv_result: CVVResult.new(response["response"]["cvv_code"]),
           test: test?
         )
       end
@@ -212,24 +203,24 @@ module ActiveMerchant #:nodoc:
       end
 
       def success_from(response)
-        response['response']['response_code'] == 'A01'
+        response["response"]["response_code"] == "A01"
       end
 
       def message_from(response)
-        response['response']['response_desc']
+        response["response"]["response_desc"]
       end
 
       def authorization_from(response)
-        [response.try(:[], 'transaction_id'), response.try(:[], 'response').try(:[], 'authorization_code')].join('#')
+        [response.try(:[], "transaction_id"), response.try(:[], "response").try(:[], "authorization_code")].join("#")
       end
 
       def endpoint
-        "/accounts/act_#{@options[:account_id].strip}/locations/loc_#{@options[:location_id].strip}/transactions/"
+        "/accounts/act_#{@options[:account_id]}/locations/loc_#{@options[:location_id]}/transactions/"
       end
 
       def headers
         {
-          'Authorization' => ('Basic ' + Base64.strict_encode64("#{@options[:api_key]}:#{@options[:secret]}")),
+          'Authorization' => ("Basic " + Base64.strict_encode64("#{@options[:api_key]}:#{@options[:secret]}")),
           'X-Forte-Auth-Account-Id' => "act_#{@options[:account_id]}",
           'Content-Type' => 'application/json'
         }
@@ -249,7 +240,7 @@ module ActiveMerchant #:nodoc:
       end
 
       def split_authorization(authorization)
-        authorization.split('#')
+        authorization.split("#")
       end
 
       def authorization_code_from(authorization)

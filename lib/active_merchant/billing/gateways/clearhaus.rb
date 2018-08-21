@@ -1,3 +1,5 @@
+require 'openssl'
+
 module ActiveMerchant #:nodoc:
   module Billing #:nodoc:
     class ClearhausGateway < Gateway
@@ -55,7 +57,7 @@ module ActiveMerchant #:nodoc:
 
         action = if payment.respond_to?(:number)
            add_payment(post, payment)
-          '/authorizations'
+          "/authorizations"
         elsif payment.kind_of?(String)
           "/cards/#{payment}/authorizations"
         else
@@ -88,7 +90,7 @@ module ActiveMerchant #:nodoc:
 
       def verify(credit_card, options={})
         MultiResponse.run(:use_first_response) do |r|
-          r.process { authorize(0, credit_card, options) }
+          r.process { authorize(100, credit_card, options) }
           r.process(:ignore_result) { void(r.authorization, options) }
         end
       end
@@ -97,7 +99,7 @@ module ActiveMerchant #:nodoc:
         post = {}
         add_payment(post, credit_card)
 
-        commit('/cards', post)
+        commit("/cards", post)
       end
 
       def supports_scrubbing?
@@ -139,8 +141,8 @@ module ActiveMerchant #:nodoc:
 
       def headers(api_key)
         {
-          'Authorization'  => 'Basic ' + Base64.strict_encode64("#{api_key}:"),
-          'User-Agent'     => "Clearhaus ActiveMerchantBindings/#{ActiveMerchant::VERSION}"
+          "Authorization"  => "Basic " + Base64.strict_encode64("#{api_key}:"),
+          "User-Agent"     => "Clearhaus ActiveMerchantBindings/#{ActiveMerchant::VERSION}"
         }
       end
 
@@ -155,7 +157,7 @@ module ActiveMerchant #:nodoc:
 
         if @options[:signing_key] && @options[:private_key]
           begin
-            headers['Signature'] = generate_signature(body)
+            headers["Signature"] = generate_signature(body)
           rescue OpenSSL::PKey::RSAError => e
             return Response.new(false, e.message)
           end

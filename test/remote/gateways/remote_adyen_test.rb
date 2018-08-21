@@ -17,22 +17,12 @@ class RemoteAdyenTest < Test::Unit::TestCase
 
     @declined_card = credit_card('4000300011112220')
 
-    @apple_pay_card = network_tokenization_credit_card('4111111111111111',
-      :payment_cryptogram => 'YwAAAAAABaYcCMX/OhNRQAAAAAA=',
-      :month              => '08',
-      :year               => '2018',
-      :source             => :apple_pay,
-      :verification_value => nil
-    )
-
     @options = {
       reference: '345123',
-      shopper_email: 'john.smith@test.com',
-      shopper_ip: '77.110.174.153',
-      shopper_reference: 'John Smith',
-      billing_address: address(),
-      order_id: '123',
-      recurring_processing_model: 'CardOnFile'
+      shopper_email: "john.smith@test.com",
+      shopper_ip: "77.110.174.153",
+      shopper_reference: "John Smith",
+      :billing_address => address(),
     }
   end
 
@@ -54,23 +44,9 @@ class RemoteAdyenTest < Test::Unit::TestCase
     assert_equal '[capture-received]', response.message
   end
 
-  def test_successful_purchase_no_cvv
-    credit_card = @credit_card
-    credit_card.verification_value = nil
-    response = @gateway.purchase(@amount, credit_card, @options)
-    assert_success response
-    assert_equal '[capture-received]', response.message
-  end
-
   def test_successful_purchase_with_more_options
-    options = @options.merge!(fraudOffset: '1', installments: 2)
+    options = @options.merge!(fraudOffset: '1')
     response = @gateway.purchase(@amount, @credit_card, options)
-    assert_success response
-    assert_equal '[capture-received]', response.message
-  end
-
-  def test_successful_purchase_with_apple_pay
-    response = @gateway.purchase(@amount, @apple_pay_card, @options)
     assert_success response
     assert_equal '[capture-received]', response.message
   end
@@ -142,39 +118,6 @@ class RemoteAdyenTest < Test::Unit::TestCase
     assert_equal 'Original pspReference required for this operation', response.message
   end
 
-  def test_successful_store
-    assert response = @gateway.store(@credit_card, @options)
-
-    assert_success response
-    assert !response.authorization.split('#')[2].nil?
-    assert_equal 'Authorised', response.message
-  end
-
-  def test_failed_store
-    assert response = @gateway.store(@declined_card, @options)
-
-    assert_failure response
-    assert_equal 'Refused', response.message
-  end
-
-  def test_successful_purchase_using_stored_card
-    assert store_response = @gateway.store(@credit_card, @options)
-    assert_success store_response
-
-    response = @gateway.purchase(@amount, store_response.authorization, @options)
-    assert_success response
-    assert_equal '[capture-received]', response.message
-  end
-
-  def test_successful_authorize_using_stored_card
-    assert store_response = @gateway.store(@credit_card, @options)
-    assert_success store_response
-
-    response = @gateway.authorize(@amount, store_response.authorization, @options)
-    assert_success response
-    assert_equal 'Authorised', response.message
-  end
-
   def test_successful_verify
     response = @gateway.verify(@credit_card, @options)
     assert_success response
@@ -202,18 +145,6 @@ class RemoteAdyenTest < Test::Unit::TestCase
 
     assert_scrubbed(@credit_card.number, transcript)
     assert_scrubbed(@credit_card.verification_value, transcript)
-    assert_scrubbed(@gateway.options[:password], transcript)
-  end
-
-  def test_transcript_scrubbing_network_tokenization_card
-    transcript = capture_transcript(@gateway) do
-      @gateway.purchase(@amount, @apple_pay_card, @options)
-    end
-    transcript = @gateway.scrub(transcript)
-
-    assert_scrubbed(@apple_pay_card.number, transcript)
-    assert_scrubbed(@apple_pay_card.payment_cryptogram, transcript)
-    assert_scrubbed(@gateway.options[:password], transcript)
   end
 
   def test_incorrect_number_for_purchase
@@ -234,7 +165,7 @@ class RemoteAdyenTest < Test::Unit::TestCase
     card = credit_card('4242424242424242', month: 16)
     assert response = @gateway.purchase(@amount, card, @options)
     assert_failure response
-    assert_equal 'Expiry Date Invalid: Expiry month should be between 1 and 12 inclusive', response.message
+    assert_equal 'Expiry month should be between 1 and 12 inclusive Card', response.message
   end
 
   def test_invalid_expiry_year_for_purchase
@@ -255,19 +186,22 @@ class RemoteAdyenTest < Test::Unit::TestCase
     @options[:billing_address].delete(:address1)
     @options[:billing_address].delete(:address2)
     response = @gateway.authorize(@amount, @credit_card, @options)
-    assert_success response
+    assert_failure response
+    assert_match Gateway::STANDARD_ERROR_CODE[:incorrect_address], response.error_code
   end
 
   def test_missing_city_for_purchase
     @options[:billing_address].delete(:city)
     response = @gateway.authorize(@amount, @credit_card, @options)
-    assert_success response
+    assert_failure response
+    assert_match Gateway::STANDARD_ERROR_CODE[:incorrect_address], response.error_code
   end
 
   def test_missing_house_number_or_name_for_purchase
     @options[:billing_address].delete(:address2)
     response = @gateway.authorize(@amount, @credit_card, @options)
-    assert_success response
+    assert_failure response
+    assert_match Gateway::STANDARD_ERROR_CODE[:incorrect_address], response.error_code
   end
 
   def test_invalid_country_for_purchase

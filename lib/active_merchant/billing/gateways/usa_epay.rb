@@ -14,10 +14,10 @@ module ActiveMerchant #:nodoc:
       # create an instance of UsaEpayAdvancedGateway.
       #
       def self.new(options={})
-        if options.has_key?(:software_id) || options.has_key?(:live_url)
-          UsaEpayAdvancedGateway.new(options)
-        else
+        unless options.has_key?(:software_id) || options.has_key?(:live_url)
           UsaEpayTransactionGateway.new(options)
+        else
+          UsaEpayAdvancedGateway.new(options)
         end
       end
     end
