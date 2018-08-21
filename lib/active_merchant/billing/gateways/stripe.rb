@@ -30,6 +30,42 @@ module ActiveMerchant #:nodoc:
       self.homepage_url = 'https://stripe.com/'
       self.display_name = 'Stripe'
 
+      # NOTE: pulled from newer version of ActiveMerchant
+      # https://github.com/activemerchant/active_merchant/blob/5bb9d2c16c18afde89da20a07c3f25c7002312fe/lib/active_merchant/billing/gateway.rb
+      #
+      # == Standardized Error Codes
+      #
+      # :incorrect_number - Card number does not comply with ISO/IEC 7812 numbering standard
+      # :invalid_number - Card number was not matched by processor
+      # :invalid_expiry_date - Expiry date deos not match correct formatting
+      # :invalid_cvc - Security codes does not match correct format (3-4 digits)
+      # :expired_card - Card number is expired
+      # :incorrect_cvc - Secerity code was not matched by the processor
+      # :incorrect_zip - Zip code is not in correct format
+      # :incorrect_address - Billing address info was not matched by the processor
+      # :incorrect_pin - Card PIN is incorrect
+      # :card_declined - Card number declined by processor
+      # :processing_error - Processor error
+      # :call_issuer - Transaction requires voice authentication, call issuer
+      # :pickup_card - Issuer requests that you pickup the card from merchant
+
+      STANDARD_ERROR_CODE = {
+        :incorrect_number => 'incorrect_number',
+        :invalid_number => 'invalid_number',
+        :invalid_expiry_date => 'invalid_expiry_date',
+        :invalid_cvc => 'invalid_cvc',
+        :expired_card => 'expired_card',
+        :incorrect_cvc => 'incorrect_cvc',
+        :incorrect_zip => 'incorrect_zip',
+        :incorrect_address => 'incorrect_address',
+        :incorrect_pin => 'incorrect_pin',
+        :card_declined => 'card_declined',
+        :processing_error => 'processing_error',
+        :call_issuer => 'call_issuer',
+        :pickup_card => 'pick_up_card',
+        :config_error => 'config_error'
+      }
+
       STANDARD_ERROR_CODE_MAPPING = {
         'incorrect_number' => STANDARD_ERROR_CODE[:incorrect_number],
         'invalid_number' => STANDARD_ERROR_CODE[:invalid_number],
