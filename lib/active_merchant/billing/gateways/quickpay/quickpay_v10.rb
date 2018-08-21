@@ -15,7 +15,7 @@ module ActiveMerchant
       end
 
       def purchase(money, credit_card_or_reference, options = {})
-        MultiResponse.run(true) do |r|
+        MultiResponse.run do |r|
           if credit_card_or_reference.is_a?(String)
             r.process { create_token(credit_card_or_reference, options) }
             credit_card_or_reference = r.authorization
@@ -34,7 +34,7 @@ module ActiveMerchant
       end
 
       def authorize(money, credit_card_or_reference, options = {})
-        MultiResponse.run(true) do |r|
+        MultiResponse.run do |r|
           if credit_card_or_reference.is_a?(String)
             r.process { create_token(credit_card_or_reference, options) }
             credit_card_or_reference = r.authorization
@@ -132,7 +132,6 @@ module ActiveMerchant
 
         def create_token(identification, options)
           post = {}
-          # post[:id] = options[:id]
           commit(synchronized_path("/cards/#{identification}/tokens"), post)
         end
 
@@ -161,10 +160,10 @@ module ActiveMerchant
         end
 
         def authorization_from(response)
-          if response["token"]
-            response["token"].to_s
+          if response['token']
+            response['token'].to_s
           else
-             response["id"].to_s
+             response['id'].to_s
           end
         end
 
@@ -196,7 +195,7 @@ module ActiveMerchant
             post[:shipping_address] = map_address(options[:shipping_address])
           end
 
-          [:metadata, :brading_id, :variables].each do |field|
+          [:metadata, :branding_id, :variables].each do |field|
             post[field] = options[field] if options[field]
           end
         end
@@ -232,13 +231,13 @@ module ActiveMerchant
         end
 
         def message_from(success, response)
-          success ? 'OK' : (response['message'] || invalid_operation_message(response) || "Unknown error - please contact QuickPay")
+          success ? 'OK' : (response['message'] || invalid_operation_message(response) || 'Unknown error - please contact QuickPay')
         end
 
         def invalid_operation_code?(response)
           if response['operations']
             operation = response['operations'].last
-            operation && operation['qp_status_code'] != "20000"
+            operation && operation['qp_status_code'] != '20000'
           end
         end
 
@@ -268,11 +267,11 @@ module ActiveMerchant
         def headers
           auth = Base64.strict_encode64(":#{@options[:api_key]}")
           {
-            "Authorization"  => "Basic " + auth,
-            "User-Agent"     => "Quickpay-v#{API_VERSION} ActiveMerchantBindings/#{ActiveMerchant::VERSION}",
-            "Accept"         => "application/json",
-            "Accept-Version" => "v#{API_VERSION}",
-            "Content-Type"   => "application/json"
+            'Authorization'  => 'Basic ' + auth,
+            'User-Agent'     => "Quickpay-v#{API_VERSION} ActiveMerchantBindings/#{ActiveMerchant::VERSION}",
+            'Accept'         => 'application/json',
+            'Accept-Version' => "v#{API_VERSION}",
+            'Content-Type'   => 'application/json'
           }
         end
 
@@ -287,7 +286,7 @@ module ActiveMerchant
         def json_error(raw_response)
           msg = 'Invalid response received from the Quickpay API.'
           msg += "  (The raw response returned by the API was #{raw_response.inspect})"
-          { "message" => msg }
+          { 'message' => msg }
         end
 
         def synchronized_path(path)

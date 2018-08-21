@@ -7,11 +7,11 @@ module ActiveMerchant #:nodoc:
 
       class_attribute :test_url, :live_url, :delimiter, :actions
 
-      self.test_url = 'https://demo.myvirtualmerchant.com/VirtualMerchantDemo/process.do'
-      self.live_url = 'https://www.myvirtualmerchant.com/VirtualMerchant/process.do'
+      self.test_url = 'https://api.demo.convergepay.com/VirtualMerchantDemo/process.do'
+      self.live_url = 'https://api.convergepay.com/VirtualMerchant/process.do'
 
       self.display_name = 'Elavon MyVirtualMerchant'
-      self.supported_countries = %w(US CA PR DE IE NO PL LU BE NL)
+      self.supported_countries = %w(US CA PR DE IE NO PL LU BE NL MX)
       self.supported_cardtypes = [:visa, :master, :american_express, :discover]
       self.homepage_url = 'http://www.elavon.com/'
 
@@ -96,7 +96,7 @@ module ActiveMerchant #:nodoc:
 
       def credit(money, creditcard, options = {})
         if creditcard.is_a?(String)
-          raise ArgumentError, "Reference credits are not supported. Please supply the original credit card or use the #refund method."
+          raise ArgumentError, 'Reference credits are not supported. Please supply the original credit card or use the #refund method.'
         end
 
         form = {}
@@ -134,6 +134,17 @@ module ActiveMerchant #:nodoc:
         add_customer_data(form, options)
         add_test_mode(form, options)
         commit(:update, nil, form, options)
+      end
+
+      def supports_scrubbing?
+        true
+      end
+
+      def scrub(transcript)
+        transcript.
+          gsub(%r((&?ssl_pin=)[^&]*)i, '\1[FILTERED]').
+          gsub(%r((&?ssl_card_number=)[^&\\n\r\n]*)i, '\1[FILTERED]').
+          gsub(%r((&?ssl_cvv2cvc2=)[^&]*)i, '\1[FILTERED]')
       end
 
       private
@@ -260,7 +271,7 @@ module ActiveMerchant #:nodoc:
       def post_data(parameters, options)
         result = preamble
         result.merge!(parameters)
-        result.collect { |key, value| post_data_string(key, value, options) }.join("&")
+        result.collect { |key, value| post_data_string(key, value, options) }.join('&')
       end
 
       def post_data_string(key, value, options)
@@ -291,9 +302,9 @@ module ActiveMerchant #:nodoc:
       def parse(msg)
         resp = {}
         msg.split(self.delimiter).collect{|li|
-            key, value = li.split("=")
-            resp[key.to_s.strip.gsub(/^ssl_/, '')] = value.to_s.strip
-          }
+          key, value = li.split('=')
+          resp[key.to_s.strip.gsub(/^ssl_/, '')] = value.to_s.strip
+        }
         resp
       end
 
